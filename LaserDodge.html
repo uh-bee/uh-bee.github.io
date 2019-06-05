@@ -1,0 +1,370 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>My Delorean</title>
+<script type="text/javascript" src="processing.js"></script>
+</head>
+
+<p>!!Please keep in mind the hitbox is not accurate with the delorean because of the shape of the object. I made it as close as I possibly could!!</p>
+<body>
+<script type="text/processing">
+
+import processing.pdf.*;
+
+PFont font1; PFont font2; PFont bold;
+PImage bg; PImage bgR; PImage delorean; PImage delorean2; PImage costume;
+
+int x; int cx; int cy; int cVy; int moveSpeed;
+int numLasers = 7;
+int gameState; PImage lazer; int[] kx = new int[numLasers]; int[] ky = new int[numLasers]; int count;
+int score; int highScore; 
+PImage missile; int bx; int by;
+PImage delBullet; int fx; int fy;
+PImage back2; int fireCount; int missileCount;
+boolean isShooting; boolean bull;
+PImage blank; PImage blankCostume; PImage blank2; PImage blankR; PImage blank2R;
+int gx; int gy; int blankCount; int blankTimer; int blankCount2;
+int chaseCount;
+
+
+void setup(){
+  isShooting = true;
+  bull = false;
+  gameState = -1;
+  font2 = createFont("Georgia", 16);
+  font1 = createFont("CHILLER", 35);
+  bold = createFont("GEORGIA", 24);
+  size(800,600);
+  bg = loadImage("./img/gameBg.jpg");
+  bgR = loadImage("./img/gameBg.jpg");
+  delorean = loadImage("./img/delorean.png");
+  delorean2 = loadImage("./img/delorean.png");
+  costume = delorean;
+  lazer = loadImage("./img/lazer.png");
+  missile = loadImage("./img/missile.png");
+  delBullet = loadImage("./img/bullet.png");
+  back2 = loadImage("./img/back2.jpg");
+  blank = loadImage("./img/blank.png");
+  blank2 = loadImage("./img/blank.png");
+  blankR = loadImage("./img/blank.png");
+  blank2R = loadImage("./img/blank.png");
+  blankCostume = blank;
+  
+  cVy = 2;
+  cy = 100;
+  cx = 50;
+  gx = width + 500;
+  fx = width + 10000;
+  bx = width + 200;
+  by = (int)random(200,600);
+  for(int i =0; i < numLasers ; i++){
+    kx[i] = width + (int)random(50, 200) + 200*i;
+    ky[i] = height/2 + (int)random(-200,200);
+  }
+  
+}
+
+
+void draw(){
+  moveSpeed++;
+  count++;
+  move();
+  if(score > highScore){
+        highScore = score;
+  }
+  if(gameState==0){
+  //Background goes on top!  (first!)
+  image(bg, x, 0);
+  image(bgR, x+bg.width-6, 0);
+  image(bg, x+2*bg.width -12, 0);
+  if(score > 100){
+    bx++;
+    x++;
+    for(int i = 0; i < numLasers; i++){
+      kx[i]++;  
+    }
+  }
+  if(x < -(2*bg.width+12)){
+    x=0;
+  } 
+
+  //lazer beam code
+  for(int i = 0; i<numLasers ; i++){
+    kx[i]-= 2;
+    if(kx[i] < -10){
+      score++;
+      kx[i] = width + (int)random(50, 200);
+      ky[i] = height/2 + (int)random(-200,200);
+    }
+    if(abs((int)((fx+10)-(kx[i]+5))) < 10 && abs((int)((fy+10) - (ky[i]+32))) < 46){
+      kx[i]+=2000;
+      fx = width +20000;
+      score++;
+    }
+    if(abs((int)((cx+35)-(kx[i]+7))) < 22 && abs((int)((cy+34) - (ky[i]+41))) < 74){
+      gameState=1;
+    }
+    image(lazer, kx[i], ky[i]);
+    
+    //missile launch code
+    if(score >10){
+      bx -= 1;
+      if(score > 20){
+        chaseDelorean();
+      }
+      if(bx < -100){
+         bx = width + 2000;
+         by = (int)random(200,600);
+      }
+      if(abs((int)((cx+35)-(bx+75))) < 80 && abs((int)((cy+34) - (by+52))) < 86){
+        gameState=1;
+      }
+      image(missile, bx, by);
+    }     
+  }
+      //blank Code
+    if(score >100){
+      if(gx > cx && score > 15){
+        gx--;
+      }
+      else if(blankCount%5==0){
+        if(gx > width){
+          gx -= 1;
+        }
+        if(gx > cx){
+          gx--;
+        }
+        if(gy < cy){
+          gy+=2;
+        }
+        if(gx < cx){
+          gx++;
+        }
+        if(gy > cy){
+          gy-=2;
+        }
+      }
+      if(gx < -100){
+         gx = width + 3000;
+         gy = (int)random(200,600);
+      }
+      if(abs((int)((cx+35)-(gx+67))) < 50 && abs((int)((cy+34) - (gy+67))) < 50){
+        gameState=1;
+      }
+      if(gx > cx){
+        blankCostume = blank;
+      }
+      else{
+        blankCostume = blankR;
+      }
+      if(blankTimer > 1500){
+        if(blankCount%3==0){
+          if(gx > cx){
+            blankCostume = blank2;
+          }
+          else{
+            blankCostume = blank2R;
+          }
+          blankCount2++;
+        }
+        if (blankCount2%3==0){
+          if(gx > cx){
+            blankCostume = blank;
+          }
+          else{
+            blankCostume = blankR;
+          }
+        }
+      }
+      if (blankTimer > 1700){
+        gx +=1500;
+        blankTimer = -500;
+        blankCostume = blank;
+      }
+      image(blankCostume, gx, gy);
+      blankCount++;
+      blankTimer++;
+    }     
+  
+  
+  //delorean code
+  image(costume, cx,cy);
+  cy = cy + cVy;
+  if(count%2 ==0){
+    cVy ++;
+  }
+  x--;
+  checkdelorean();
+  
+  //missile that shoots from the delorean CODE
+  image(delBullet, fx, fy);
+  fx += 10;
+  if(abs((int)((fx+10)-(bx+75))) < 80 && abs((int)((fy+10) - (by+52))) < 86){
+      bx+=2000;  
+      fx =20000;
+      score++;
+      if(missileCount==0){
+        bull = true;
+      }
+      if(missileCount>0){
+        bull = false; 
+      }
+      missileCount++;
+      
+  }
+  if(fx > width + 20){
+    fx = 20000;
+  } 
+ //END GAMESTATE 0 
+ }
+
+  //Delorean is destroyed
+  if(gameState==1){
+
+    //BEGIN BUTTON
+    textSize(34);   //SIZE OF TEXT
+    text("You died!!!", 100,146);
+    fill(245); 
+    rect(90,160, 240, 45, 10);  //BACKGROUND OF BUTTON
+    fill(0);
+    //END BUTTON
+    
+    //RESTART GAME
+    if(mouseX > 90 && mouseY > 160 && mouseX < 330 && mouseY < 205){
+      if (mousePressed){
+        cy = 100;
+        cVy = 2;
+        cx = 50;
+        score = 0;
+        gx = width + 500;
+        fx = width + 10000;
+        bx = width + 200;
+        by = (int)random(200,600);       
+        for(int i =0; i < numLasers ; i++){
+          kx[i] = width + (int)random(50, 200) + 200*i;
+          ky[i] = height/2 + (int)random(-200,200);
+        }
+        gameState=0;             
+      }
+ 
+      else{  //HOVER OVER BUT NOT CLICK
+        fill(255,0,0);
+        rect(90,160, 240, 45, 10);
+        fill(0);
+        text("RESTART?", 100,196);  //TEXT ON BUTTON
+      }
+    }
+    else{
+      text("CLICK HERE!", 100,196);  //TEXT ON BUTTON
+    }  
+  }
+  
+  //TEXT TO SCREEN
+  fill(255);
+  textSize(18);
+  text("Current Score: " + score, width -130, 30);
+  text("High Score: " + highScore, width - 130, 50);
+  if(score > 8 && score < 12){
+    fill(255,0,0);
+    textSize(50);
+    text("WATCH OUT FOR MISSILES", 160, 110);
+    fill(255);
+    textSize(16);
+  }
+  if(fireCount < 1 && score > 0){
+    if(score <5){
+      text("LAZERS FROM THE DELOREAN CAN DESTROY THE ENEMY LAZERS?", 100, 30);
+    }
+    else{
+       text("Use the RIGHT MOUSE to shoot LAZERS", 100, 30);
+    }
+  }
+
+  
+  //START SCREEN
+  if(gameState == -1){
+    image(back2,0,0);
+    fill(0,0,0,255);
+    textSize(24);
+    textFont(font1);
+    if(mousePressed && mouseX>250){
+      gameState = 0;
+    }   
+
+    textFont(font2);
+    text("MOVE:  LEFT/RIGHT MOUSE", 15, 145);
+    text("FIRE:  SPACE OR RIGHT CLICK", 15, 170);
+    text("FLY:  LEFT CLICK", 15, 195); 
+    
+    fill(0,0,0);
+    textFont(bold);
+    text("DELOREAN CONTROLS", 25, 115);
+    noFill();
+    rect(10, 125, 248,75, 5);
+  }
+  
+}
+//END DRAW
+
+
+void move(){
+  if (mouseX > cx){    
+    cx+=2;
+  }
+  else if(mouseX < cx){
+    cx-=2;
+  }
+}
+
+void keyPressed(){
+  if(key==32){
+    fire();
+  }
+}
+void mousePressed(){
+  if(mouseButton == LEFT){
+    cVy = -11;
+  }
+  else if(mouseButton == RIGHT){
+    fire();
+  }
+  costume = delorean2;
+  
+}
+
+void mouseReleased(){
+  costume = delorean; 
+}
+void fire(){
+  fx = cx + 20;
+  fy = cy + 45;
+  fireCount++;
+  if(fireCount > 4){
+    isShooting = true;
+  }
+  else{
+    isShooting = false;
+  }
+}
+void checkdelorean(){
+  if(cy > height || cy < -80){
+    gameState =1;
+  }
+}
+
+void chaseDelorean(){
+   if(by > cy && chaseCount%3==0){
+     by--;
+     bx--;
+   }
+   if(by < cy && chaseCount%3==0){
+     by++;
+     bx--;
+   }
+   chaseCount++;
+}
+
+</script>
+<canvas id="sketch" style="border: 1px solid black;"></canvas>
+</body>
+</html>
